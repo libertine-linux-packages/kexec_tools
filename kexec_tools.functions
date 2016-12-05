@@ -1,0 +1,72 @@
+# This file is part of libertine linux's package kexec_tools. It is subject to the license terms in the COPYRIGHT file found in the top-level directory of this distribution and at https://raw.githubusercontent.com/libertine-linux-packages/kexec_tools/master/COPYRIGHT. No part of libertine linux's package kexec_tools, including this file, may be copied, modified, propagated, or distributed except according to the terms contained in the COPYRIGHT file.
+# Copyright © 2016 The developers of libertine linux's package kexec_tools. See the COPYRIGHT file in the top-level directory of this distribution and at https://raw.githubusercontent.com/libertine-linux-packages/kexec_tools/master/COPYRIGHT.
+
+
+variant=upstream
+
+depends zlib xz_utils
+
+depends build_ccache
+build_needs ccache
+
+depends build_gnumake
+build_needs make
+
+depends build_slibtool
+build_needs clibtool-static libtoolize realpath
+
+depends build_perl
+build_needs perl
+
+depends build_autoconf
+build_needs autoconf autoheader autom4te autoreconf autoscan autoupdate ifnames
+
+depends build_automake
+build_needs automake aclocal
+
+depends build_gnum4
+build_needs m4
+
+depends build_musl_cross_make_host
+build_needs "$libertine_host"-cc "$libertine_host"-gcc "$libertine_host"-ar "$libertine_host"-ld "$libertine_host"-ranlib "$libertine_host"-strip "$libertine_host"-as "$libertine_host"-objcopy
+
+depends build_busybox
+# autoconf
+build_needs expr install sort
+build_needs ls
+# Inside their build system
+build_needs tar dirname
+# For libertine_compile_kexec_tools
+build_needs cat grep mv sed
+
+libertine_compile_kexec_tools()
+{
+	pushd "$(libertine_public_sourcePath)"
+		
+		libertine_public_autoconf_replaceWithKnownVersionOfConfigSub config/config.sub
+		
+		# Remove documentation
+		mv Makefile.in Makefile.in.orig
+		cat Makefile.in.orig \
+			| grep -h -v -F -e 'include $(srcdir)/doc/Makefile' \
+			| grep -h -v -F -e 'include $(srcdir)/kdump/Makefile' \
+			| grep -h -v -F -e 'include $(srcdir)/vmcore-dmesg/Makefile' \
+			| grep -h -v -F -e 'include $(srcdir)/kexec_test/Makefile' \
+			>Makefile.in
+		
+		sed -i -e 's/TARGETS:=\$\(BINARIES\) \$\(MAN_PAGES\)/TARGETS:=$(BINARIES)/g' Makefile.in
+		
+		./bootstrap
+		
+		libertine_public_autoconf_removeCFlags='-ffunction-sections -fdata-sections -Wl,--gc-sections -D_GNU_SOURCE -fno-common -fomit-frame-pointer' libertine_public_autoconf_modernAutoconfConfigure \
+			--with-zlib="$(libertine_public_outputHostSysrootPath zlib)"/usr \
+			--with-lzma="$(libertine_public_outputHostSysrootPath xz_utils)"/usr \
+			--without-xen
+		
+		libertine_public_make
+		libertine_public_make DESTDIR="$(libertine_public_outputHostSysrootPath)" install
+	popd
+	
+	# We only install kexec; we leave kdump and vmcore-dmesg behind
+	libertine_public_installAndStripBinariesIn sbin kexec
+}
