@@ -30,6 +30,9 @@ build_needs m4
 depends build_musl_cross_make_host
 build_needs "$libertine_host"-cc "$libertine_host"-gcc "$libertine_host"-ar "$libertine_host"-ld "$libertine_host"-ranlib "$libertine_host"-strip "$libertine_host"-as "$libertine_host"-objcopy
 
+depends build_paxctl
+build_needs paxctl
+
 depends build_busybox
 # autoconf
 build_needs expr install sort
@@ -68,5 +71,5 @@ libertine_compile_kexec_tools()
 	popd
 	
 	# We only install kexec; we leave kdump and vmcore-dmesg behind
-	libertine_public_installAndStripBinariesIn sbin kexec
+	libertine_public_installAndStripBinaryIn sbin kexec
 }
