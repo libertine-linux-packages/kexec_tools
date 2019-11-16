@@ -1,8 +1,4 @@
-Updating origin
-https://github.com/libertine-linux-mirrors/kexec-tools
-Branch 'master' set up to track remote branch 'master' from 'origin'.
 [submodule "upstream"]
 	path = upstream
 	url = https://github.com/libertine-linux-mirrors/kexec-tools.git
 	branch = master
-	libertine-linux-upstream = https://git.kernel.org/pub/scm/utils/kernel/kexec/kexec-tools.git
